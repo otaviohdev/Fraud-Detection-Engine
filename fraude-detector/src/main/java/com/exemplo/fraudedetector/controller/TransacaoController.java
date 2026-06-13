@@ -3,6 +3,7 @@ package com.exemplo.fraudedetector.controller;
 import com.exemplo.fraudedetector.dto.ScoreResponse;
 import com.exemplo.fraudedetector.dto.TransacaoRequest;
 import com.exemplo.fraudedetector.service.ScoreService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,7 +17,7 @@ public class TransacaoController {
     }
 
     @PostMapping("/analisar")
-    public ScoreResponse analisar(@RequestBody TransacaoRequest transacao) {
+    public ScoreResponse analisar(@Valid @RequestBody TransacaoRequest transacao) {
         return scoreService.calcularScore(transacao);
     }
 }
