@@ -72,3 +72,5 @@ public class ScoreService {
         return new ScoreResponse(score, risco);
     }
 }
+
+
