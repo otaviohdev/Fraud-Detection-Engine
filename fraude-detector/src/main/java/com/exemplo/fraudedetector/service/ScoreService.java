@@ -4,7 +4,6 @@ import com.exemplo.fraudedetector.dto.ScoreResponse;
 import com.exemplo.fraudedetector.dto.TransacaoRequest;
 import com.exemplo.fraudedetector.model.Transacao;
 import com.exemplo.fraudedetector.repository.TransacaoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutionException;
@@ -14,7 +13,6 @@ public class ScoreService {
 
     private final TransacaoRepository transacaoRepository;
 
-    @Autowired
     public ScoreService(TransacaoRepository transacaoRepository) {
         this.transacaoRepository = transacaoRepository;
     }
