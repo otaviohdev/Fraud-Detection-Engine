@@ -4,6 +4,13 @@ import jakarta.validation.constraints.*;
 
 public class TransacaoRequest {
 
+    @NotBlank(message = "O usuarioId é obrigatório")
+@Size(max = 50, message = "usuarioId excede o tamanho máximo permitido")
+private String usuarioId;
+
+public String getUsuarioId() { return usuarioId; }
+public void setUsuarioId(String usuarioId) { this.usuarioId = usuarioId; }
+
     @NotNull(message = "O valor é obrigatório")
     @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero")
     @DecimalMax(value = "1000000.00", message = "O valor excede o limite permitido")

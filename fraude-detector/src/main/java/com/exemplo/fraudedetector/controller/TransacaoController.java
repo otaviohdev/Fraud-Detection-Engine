@@ -17,7 +17,7 @@ public class TransacaoController {
     }
 
     @PostMapping("/analisar")
-    public ScoreResponse analisar(@Valid @RequestBody TransacaoRequest transacao) {
+    public ScoreResponse analisar(@Valid @RequestBody TransacaoRequest transacao) throws Exception {
         return scoreService.calcularScore(transacao);
     }
 }
