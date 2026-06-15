@@ -35,7 +35,7 @@ public class SecurityConfig {
             "http://localhost:3000"
         ));
 
-        config.setAllowedMethods(List.of("POST"));
+        config.setAllowedMethods(List.of("POST", "GET"));
 
         config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
 
