@@ -19,15 +19,22 @@ public class FirebaseConfig {
         if (FirebaseApp.getApps().isEmpty()) {
             InputStream serviceAccount;
 
-            // Lê direto das variáveis de ambiente do sistema (funciona no Railway)
             String credenciaisBase64 = System.getenv("FIREBASE_CREDENTIALS");
 
+            // Log para debug — vai aparecer nos logs do Railway
+            System.out.println("=== FIREBASE DEBUG ===");
+            System.out.println("Variavel presente: " + (credenciaisBase64 != null));
+            System.out.println("Variavel vazia: " + (credenciaisBase64 == null || credenciaisBase64.isEmpty()));
+            if (credenciaisBase64 != null) {
+                System.out.println("Primeiros 20 chars: " + credenciaisBase64.substring(0, Math.min(20, credenciaisBase64.length())));
+                System.out.println("Tamanho: " + credenciaisBase64.length());
+            }
+            System.out.println("=== FIM DEBUG ===");
+
             if (credenciaisBase64 != null && !credenciaisBase64.isEmpty()) {
-                // Produção: decodifica o Base64 e usa como stream
                 byte[] decoded = Base64.getDecoder().decode(credenciaisBase64.trim());
                 serviceAccount = new ByteArrayInputStream(decoded);
             } else {
-                // Local: lê o arquivo JSON normalmente
                 serviceAccount = getClass().getClassLoader()
                     .getResourceAsStream("firebase-service-account.json");
             }
