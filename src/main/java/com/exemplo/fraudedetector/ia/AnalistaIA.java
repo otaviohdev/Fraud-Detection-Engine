@@ -11,7 +11,7 @@ import java.util.Map;
 @Component
 public class AnalistaIA {
 
-    @Value("${gemini.api.key}")
+    @Value("${GEMINI_API_KEY}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
