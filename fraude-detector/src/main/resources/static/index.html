@@ -1,109 +1,805 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard Antifraude</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FraudShield — Dashboard Antifraude</title>
+
+  <!-- Fonte corporativa: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
-    h1 { color: #333; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th { background: #333; color: white; padding: 10px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #ddd; }
-    .ALTO { color: red; font-weight: bold; }
-    .MEDIO { color: orange; font-weight: bold; }
-    .BAIXO { color: green; font-weight: bold; }
-    .FRAUDE { color: red; font-weight: bold; }
-    .NORMAL { color: green; font-weight: bold; }
-    .form-box { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
-    input { margin: 5px; padding: 8px; width: 200px; }
-    button { padding: 10px 20px; background: #333; color: white; border: none; cursor: pointer; margin: 5px; }
-    #resultado { margin-top: 10px; font-size: 18px; font-weight: bold; }
-    #mlResultado { margin-top: 5px; font-size: 16px; font-weight: bold; }
+    /* ─── Reset e variáveis ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0B0F1A;   /* fundo principal escuro */
+      --surface:   #111827;   /* cards */
+      --surface2:  #1A2235;   /* inputs / hover */
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.13);
+      --accent:    #3B82F6;   /* azul corporativo */
+      --accent2:   #60A5FA;
+      --text:      #F1F5F9;
+      --muted:     #94A3B8;
+      --danger:    #EF4444;
+      --warn:      #F59E0B;
+      --ok:        #22C55E;
+      --danger-bg: rgba(239,68,68,0.12);
+      --warn-bg:   rgba(245,158,11,0.12);
+      --ok-bg:     rgba(34,197,94,0.12);
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── Grid de fundo animado ──────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* ─── Layout principal ───────────────────────────────────── */
+    .app {
+      position: relative; z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+    }
+
+    /* ─── Topbar ─────────────────────────────────────────────── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+    .logo-text span { color: var(--accent2); }
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--ok-bg);
+      border: 1px solid rgba(34,197,94,0.25);
+      color: var(--ok);
+      font-size: 12px; font-weight: 500;
+      padding: 6px 12px; border-radius: 999px;
+    }
+    .pulse {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ok);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ─── Cards de métricas ──────────────────────────────────── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .metric-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+    .metric-card::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .metric-card.blue::after  { background: linear-gradient(90deg, #3B82F6, transparent); }
+    .metric-card.green::after { background: linear-gradient(90deg, #22C55E, transparent); }
+    .metric-card.warn::after  { background: linear-gradient(90deg, #F59E0B, transparent); }
+    .metric-card.red::after   { background: linear-gradient(90deg, #EF4444, transparent); }
+    .metric-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .metric-value { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+    .metric-value.blue  { color: #60A5FA; }
+    .metric-value.green { color: #4ADE80; }
+    .metric-value.warn  { color: #FCD34D; }
+    .metric-value.red   { color: #F87171; }
+    .metric-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    /* ─── Layout 2 colunas ───────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* ─── Card do formulário ─────────────────────────────────── */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: sticky; top: 24px;
+    }
+    .card-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(59,130,246,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+    .card-header-title { font-size: 14px; font-weight: 600; }
+    .card-header-sub   { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .card-body { padding: 20px 22px; }
+
+    /* Grupos de input */
+    .input-group { margin-bottom: 14px; }
+    .input-group label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+    .input-group input {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 14px; font-family: 'Inter', sans-serif;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+    .input-group input::placeholder { color: #475569; }
+    .input-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    /* Comentário educativo dentro do form */
+    .edu-note {
+      font-size: 11px; color: #475569; margin-top: 4px;
+      display: flex; align-items: flex-start; gap: 5px;
+    }
+    .edu-note::before { content: '→'; color: #3B82F6; flex-shrink: 0; }
+
+    /* Grid de 2 inputs lado a lado */
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Botão principal */
+    .btn-primary {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #3B82F6, #2563EB);
+      color: white; border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
+      cursor: pointer; letter-spacing: 0.01em;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+      position: relative; overflow: hidden;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.08);
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-primary:active { transform: scale(0.99); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ─── Caixa de resultado ─────────────────────────────────── */
+    .resultado-box {
+      margin-top: 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: none;
+      animation: slideDown 0.25s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .resultado-top {
+      padding: 16px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .resultado-top.ALTO  { background: var(--danger-bg); border-bottom: 1px solid rgba(239,68,68,0.2); }
+    .resultado-top.MEDIO { background: var(--warn-bg);   border-bottom: 1px solid rgba(245,158,11,0.2); }
+    .resultado-top.BAIXO { background: var(--ok-bg);     border-bottom: 1px solid rgba(34,197,94,0.2); }
+
+    .score-display { }
+    .score-num { font-size: 36px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+    .score-num.ALTO  { color: var(--danger); }
+    .score-num.MEDIO { color: var(--warn); }
+    .score-num.BAIXO { color: var(--ok); }
+    .score-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    .badges-col { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+    }
+    .badge.ALTO  { background: var(--danger-bg); color: #F87171; border: 1px solid rgba(239,68,68,0.3); }
+    .badge.MEDIO { background: var(--warn-bg);   color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
+    .badge.BAIXO { background: var(--ok-bg);     color: #4ADE80; border: 1px solid rgba(34,197,94,0.3); }
+    .badge.ml    { background: rgba(59,130,246,0.12); color: #60A5FA; border: 1px solid rgba(59,130,246,0.25); }
+
+    .resultado-bottom {
+      padding: 10px 18px;
+      background: var(--surface2);
+      font-size: 12px; color: var(--muted);
+    }
+    .regras-ativas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .regra-tag {
+      font-size: 11px; padding: 3px 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 4px; color: var(--muted);
+    }
+    .regra-tag.ativa { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: #60A5FA; }
+
+    /* ─── Card da tabela ─────────────────────────────────────── */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-header-left { display: flex; align-items: center; gap: 8px; }
+    .table-title { font-size: 14px; font-weight: 600; }
+    .count-pill {
+      font-size: 11px; font-weight: 600;
+      background: rgba(59,130,246,0.12);
+      color: #60A5FA; border: 1px solid rgba(59,130,246,0.25);
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .refresh-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); border-radius: var(--radius-sm);
+      padding: 6px 10px; font-size: 12px; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .refresh-btn:hover { border-color: var(--border2); color: var(--text); }
+    .spin { animation: spinAnim 0.8s linear infinite; display: inline-block; }
+    @keyframes spinAnim { to { transform: rotate(360deg); } }
+
+    /* Tabela */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left; padding: 10px 16px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr {
+      transition: background 0.1s;
+    }
+    tbody tr:hover td { background: var(--surface2); }
+
+    /* Célula de usuário com avatar */
+    .user-cell { display: flex; align-items: center; gap: 8px; }
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #3B82F6, #7C3AED);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;
+      text-transform: uppercase;
+    }
+
+    .valor-cell { font-weight: 500; font-variant-numeric: tabular-nums; }
+    .score-cell { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 14px; }
+
+    .risco-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .risco-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+    .risco-pill.ALTO  { background: var(--danger-bg); color: #F87171; }
+    .risco-pill.ALTO::before  { background: #F87171; }
+    .risco-pill.MEDIO { background: var(--warn-bg);   color: #FCD34D; }
+    .risco-pill.MEDIO::before { background: #FCD34D; }
+    .risco-pill.BAIXO { background: var(--ok-bg);     color: #4ADE80; }
+    .risco-pill.BAIXO::before { background: #4ADE80; }
+
+    /* Linha nova — anima ao entrar */
+    .row-new td { animation: rowIn 0.4s ease; }
+    @keyframes rowIn {
+      from { background: rgba(59,130,246,0.12); }
+      to   { background: transparent; }
+    }
+
+    /* Estado vazio */
+    .empty-state {
+      padding: 48px 20px; text-align: center; color: var(--muted);
+    }
+    .empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+    .empty-state p { font-size: 14px; }
+
+    /* Spinner do botão */
+    .btn-spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      animation: spinAnim 0.7s linear infinite;
+    }
+
+    /* ─── Toast de notificação ───────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--text);
+      z-index: 999; min-width: 260px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: toastIn 0.3s ease;
+      pointer-events: none;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .toast.hide { animation: toastOut 0.3s ease forwards; }
+    @keyframes toastOut {
+      to { opacity: 0; transform: translateY(12px); }
+    }
+    .toast-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ─── Responsivo ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .main-grid { grid-template-columns: 1fr; }
+      .form-card { position: static; }
+    }
   </style>
 </head>
 <body>
 
-<h1>Sistema Antifraude</h1>
+<div class="app">
 
-<div class="form-box">
-  <h2>Analisar Transacao</h2>
-  <input id="usuarioId" placeholder="ID do usuario" />
-  <input id="valor" placeholder="Valor (ex: 5000)" type="number" />
-  <input id="cidade" placeholder="Cidade (ex: Sao Paulo)" />
-  <input id="hora" placeholder="Hora (ex: 03:00)" />
-  <input id="dispositivo" placeholder="Dispositivo (ex: iPhone)" />
-  <br>
-  <button onclick="analisar()">Analisar</button>
-  <div id="resultado"></div>
-  <div id="mlResultado"></div>
+  <!-- ── Topbar ──────────────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <div>
+        <div class="logo-text">Fraud<span>Shield</span></div>
+      </div>
+    </div>
+    <div class="status-pill">
+      <div class="pulse"></div>
+      Sistema ativo
+    </div>
+  </div>
+
+  <!-- ── Cards de métricas em tempo real ────────────────────── -->
+  <!-- Esses números são atualizados a cada análise feita -->
+  <div class="metrics-grid">
+    <div class="metric-card blue">
+      <div class="metric-label">Total analisado</div>
+      <div class="metric-value blue" id="metricTotal">0</div>
+      <div class="metric-sub">transações</div>
+    </div>
+    <div class="metric-card green">
+      <div class="metric-label">Risco baixo</div>
+      <div class="metric-value green" id="metricBaixo">0</div>
+      <div class="metric-sub">transações seguras</div>
+    </div>
+    <div class="metric-card warn">
+      <div class="metric-label">Risco médio</div>
+      <div class="metric-value warn" id="metricMedio">0</div>
+      <div class="metric-sub">requerem atenção</div>
+    </div>
+    <div class="metric-card red">
+      <div class="metric-label">Risco alto</div>
+      <div class="metric-value red" id="metricAlto">0</div>
+      <div class="metric-sub">possível fraude</div>
+    </div>
+  </div>
+
+  <!-- ── Layout principal: formulário + tabela ──────────────── -->
+  <div class="main-grid">
+
+    <!-- ─── Coluna esquerda: formulário ──────────────────────── -->
+    <div class="form-card">
+      <div class="card-header">
+        <div class="card-header-icon">🔍</div>
+        <div>
+          <div class="card-header-title">Analisar transação</div>
+          <div class="card-header-sub">Insira os dados da operação</div>
+        </div>
+      </div>
+
+      <div class="card-body">
+
+        <!-- Campo: ID do usuário -->
+        <!-- O ScoreService.java usa esse ID para buscar o histórico no Firestore -->
+        <div class="input-group">
+          <label for="usuarioId">ID do usuário</label>
+          <input type="text" id="usuarioId" placeholder="ex: user123" autocomplete="off" />
+          <div class="edu-note">Usado para comparar com transações anteriores do mesmo usuário</div>
+        </div>
+
+        <!-- Campo: Valor -->
+        <!-- Regra 1 no ScoreService: valor > R$3.000 soma 20 pontos de risco -->
+        <div class="input-group">
+          <label for="valor">Valor (R$)</label>
+          <input type="number" id="valor" placeholder="ex: 5000" min="0" step="0.01" />
+          <div class="edu-note">Valores acima de R$ 3.000 aumentam o score de risco em 20 pts</div>
+        </div>
+
+        <!-- Linha com Cidade e Hora lado a lado -->
+        <div class="input-row">
+          <!-- Campo: Cidade -->
+          <!-- Regra 3: cidade diferente da última transação soma 25 pontos -->
+          <div class="input-group">
+            <label for="cidade">Cidade</label>
+            <input type="text" id="cidade" placeholder="ex: São Paulo" />
+          </div>
+
+          <!-- Campo: Hora (formato HH:mm) -->
+          <!-- Regra 2: horário entre 00h e 05h soma 15 pontos de risco -->
+          <div class="input-group">
+            <label for="hora">Hora (HH:mm)</label>
+            <input type="text" id="hora" placeholder="ex: 03:15" pattern="[0-2][0-9]:[0-5][0-9]" />
+          </div>
+        </div>
+
+        <!-- Campo: Dispositivo -->
+        <!-- Regra 4: dispositivo diferente do último usado soma 30 pontos -->
+        <div class="input-group">
+          <label for="dispositivo">Dispositivo</label>
+          <input type="text" id="dispositivo" placeholder="ex: iPhone, Android, Windows" />
+          <div class="edu-note">Dispositivo diferente do habitual soma 30 pts ao score</div>
+        </div>
+
+        <!-- Botão que chama a função analisar() -->
+        <button class="btn-primary" id="btnAnalisar" onclick="analisar()">
+          <span id="btnIcon">▶</span>
+          <span id="btnText">Analisar transação</span>
+        </button>
+
+        <!-- ── Caixa de resultado ────────────────────────────── -->
+        <!-- Aparece após o retorno da API com score, risco e resultado do ML -->
+        <div class="resultado-box" id="resultadoBox">
+
+          <!-- Topo colorido com score e badges -->
+          <div class="resultado-top" id="resultadoTop">
+            <div class="score-display">
+              <div class="score-num" id="scoreNum">0</div>
+              <div class="score-lbl">pontos de risco</div>
+            </div>
+            <div class="badges-col">
+              <!-- Badge de nível de risco: ALTO / MEDIO / BAIXO -->
+              <span class="badge" id="riscoBadge">BAIXO</span>
+              <!-- Badge com resultado do modelo de Machine Learning Python -->
+              <span class="badge ml" id="mlBadge">🤖 ML: —</span>
+            </div>
+          </div>
+
+          <!-- Rodapé com quais regras foram ativadas -->
+          <div class="resultado-bottom">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em;">Regras ativadas</div>
+            <div class="regras-ativas" id="regrasAtivas"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── Coluna direita: tabela de histórico ───────────────── -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-header-left">
+          <div class="table-title">Histórico de transações</div>
+          <span class="count-pill" id="countPill">0</span>
+        </div>
+        <!-- Botão para recarregar a tabela manualmente -->
+        <button class="refresh-btn" id="refreshBtn" onclick="carregarTabela()">
+          <span id="refreshIcon">↻</span> Atualizar
+        </button>
+      </div>
+
+      <div class="table-wrap" id="tabelaWrap">
+        <!-- Estado vazio inicial -->
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <p>Nenhuma transação registrada ainda.<br/>Faça a primeira análise para começar.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<h2>Ultimas Transacoes</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Usuario</th>
-      <th>Valor</th>
-      <th>Cidade</th>
-      <th>Hora</th>
-      <th>Dispositivo</th>
-      <th>Score</th>
-      <th>Risco</th>
-    </tr>
-  </thead>
-  <tbody id="tabela"></tbody>
-</table>
-
 <script>
+  /* ──────────────────────────────────────────────────────────────
+     URL base da API Java — Spring Boot rodando na porta 8080
+  ────────────────────────────────────────────────────────────── */
   const API = 'http://localhost:8080';
 
+  /* ──────────────────────────────────────────────────────────────
+     Contadores locais de risco para os cards de métricas
+     Esses valores são calculados a partir da lista do Firestore
+  ────────────────────────────────────────────────────────────── */
+  function atualizarMetricas(lista) {
+    let alto = 0, medio = 0, baixo = 0;
+
+    // Conta cada categoria percorrendo a lista inteira
+    lista.forEach(t => {
+      if (t.risco === 'ALTO')  alto++;
+      else if (t.risco === 'MEDIO') medio++;
+      else baixo++;
+    });
+
+    // Atualiza os cards na tela
+    document.getElementById('metricTotal').textContent = lista.length;
+    document.getElementById('metricBaixo').textContent = baixo;
+    document.getElementById('metricMedio').textContent = medio;
+    document.getElementById('metricAlto').textContent  = alto;
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     Mostra um toast de notificação no canto inferior direito
+  ────────────────────────────────────────────────────────────── */
+  function showToast(msg, tipo) {
+    // Remove toast anterior se existir
+    const old = document.getElementById('toast');
+    if (old) old.remove();
+
+    const cores = { ALTO: '#EF4444', MEDIO: '#F59E0B', BAIXO: '#22C55E', info: '#3B82F6', err: '#EF4444' };
+    const toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    toast.innerHTML = `<div class="toast-dot" style="background:${cores[tipo]||cores.info}"></div>${msg}`;
+    document.body.appendChild(toast);
+
+    // Remove automaticamente após 3 segundos
+    setTimeout(() => {
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     Detecta quais regras foram ativadas com base no score
+     (lógica espelhada do ScoreService.java para exibição)
+  ────────────────────────────────────────────────────────────── */
+  function detectarRegras(dados, score) {
+    const regras = [
+      { label: 'Valor alto (+20)', ativa: dados.valor > 3000 },
+      { label: 'Madrugada (+15)',  ativa: (() => { const h = parseInt((dados.hora||'').split(':')[0]); return h >= 0 && h <= 5; })() },
+      { label: 'Cidade nova (+25)', ativa: score >= 25 && dados.valor <= 3000 },
+      { label: 'Dispositivo novo (+30)', ativa: score >= 30 },
+    ];
+    return regras;
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     Função principal — chamada ao clicar em "Analisar transação"
+  ────────────────────────────────────────────────────────────── */
   async function analisar() {
-    const body = {
-      usuarioId: document.getElementById('usuarioId').value,
-      valor: parseFloat(document.getElementById('valor').value),
-      cidade: document.getElementById('cidade').value,
-      hora: document.getElementById('hora').value,
-      dispositivo: document.getElementById('dispositivo').value
+    const btn     = document.getElementById('btnAnalisar');
+    const btnIcon = document.getElementById('btnIcon');
+    const btnText = document.getElementById('btnText');
+
+    // Lê os campos do formulário
+    const dados = {
+      usuarioId:   document.getElementById('usuarioId').value.trim(),
+      valor:       parseFloat(document.getElementById('valor').value),
+      cidade:      document.getElementById('cidade').value.trim(),
+      hora:        document.getElementById('hora').value.trim(),
+      dispositivo: document.getElementById('dispositivo').value.trim()
     };
 
-    const res = await fetch(API + '/transacao/analisar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    // Validação básica antes de enviar
+    if (!dados.usuarioId || isNaN(dados.valor) || !dados.cidade || !dados.hora || !dados.dispositivo) {
+      showToast('Preencha todos os campos antes de analisar.', 'err');
+      return;
+    }
 
-    const data = await res.json();
+    // Desabilita o botão e mostra spinner enquanto aguarda a API
+    btn.disabled = true;
+    btnIcon.innerHTML = '<div class="btn-spinner"></div>';
+    btnText.textContent = 'Analisando...';
 
-    const el = document.getElementById('resultado');
-    el.className = data.risco;
-    el.textContent = 'Score: ' + data.score + ' - Risco: ' + data.risco;
+    try {
+      /* ── Requisição POST para a API Java ──────────────────────
+         O Spring Boot recebe esse JSON, processa as regras
+         no ScoreService.java e retorna score + risco + resultadoML
+      ────────────────────────────────────────────────────────── */
+      const resposta = await fetch(API + '/transacao/analisar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados) // converte objeto JS para texto JSON
+      });
 
-    const ml = document.getElementById('mlResultado');
-    ml.className = data.resultadoML;
-    ml.textContent = 'ML: ' + data.resultadoML;
+      // Converte a resposta JSON para objeto JavaScript
+      const resultado = await resposta.json();
 
-    carregarTabela();
+      // ── Atualiza a caixa de resultado ───────────────────────
+      const box = document.getElementById('resultadoBox');
+      const top = document.getElementById('resultadoTop');
+
+      // Aplica a classe de cor conforme o nível de risco
+      box.style.display = 'block';
+      top.className = 'resultado-top ' + resultado.risco;
+
+      // Score numérico em destaque
+      const scoreEl = document.getElementById('scoreNum');
+      scoreEl.textContent = resultado.score;
+      scoreEl.className = 'score-num ' + resultado.risco;
+
+      // Badge de risco
+      const riscoBadge = document.getElementById('riscoBadge');
+      riscoBadge.textContent = resultado.risco;
+      riscoBadge.className = 'badge ' + resultado.risco;
+
+      // Badge do modelo de Machine Learning (servidor Python)
+      document.getElementById('mlBadge').textContent = '🤖 ML: ' + resultado.resultadoML;
+
+      // Regras ativadas (visual educativo)
+      const regras = detectarRegras(dados, resultado.score);
+      const regrasEl = document.getElementById('regrasAtivas');
+      regrasEl.innerHTML = regras.map(r =>
+        `<span class="regra-tag${r.ativa ? ' ativa' : ''}">${r.label}</span>`
+      ).join('');
+
+      // Toast de confirmação colorido
+      showToast(`Score ${resultado.score} — Risco ${resultado.risco}`, resultado.risco);
+
+      // Recarrega a tabela de histórico automaticamente
+      carregarTabela(true);
+
+    } catch (e) {
+      // Se a API não estiver rodando, mostra erro no toast
+      showToast('Não foi possível conectar à API. Verifique se o servidor está ativo.', 'err');
+    }
+
+    // Restaura o botão ao estado original
+    btn.disabled = false;
+    btnIcon.textContent = '▶';
+    btnText.textContent = 'Analisar transação';
   }
 
-  async function carregarTabela() {
-    const res = await fetch(API + '/transacao/listar');
-    const lista = await res.json();
-    const tabela = document.getElementById('tabela');
-    tabela.innerHTML = '';
-    lista.forEach(t => {
-      tabela.innerHTML += '<tr>' +
-        '<td>' + t.usuarioId + '</td>' +
-        '<td>R$ ' + t.valor.toFixed(2) + '</td>' +
-        '<td>' + t.cidade + '</td>' +
-        '<td>' + t.hora + '</td>' +
-        '<td>' + t.dispositivo + '</td>' +
-        '<td>' + t.score + '</td>' +
-        '<td class="' + t.risco + '">' + t.risco + '</td>' +
-        '</tr>';
-    });
+  /* ──────────────────────────────────────────────────────────────
+     Carrega o histórico de transações do Firestore via API Java
+     O parâmetro "nova" marca a primeira linha como recém-chegada
+  ────────────────────────────────────────────────────────────── */
+  async function carregarTabela(nova) {
+    const refreshIcon = document.getElementById('refreshIcon');
+    refreshIcon.classList.add('spin');
+
+    try {
+      /* ── GET /transacao/listar ─────────────────────────────────
+         A API Java consulta o Firestore e retorna a lista de
+         transações salvas pelo ScoreService.java
+      ────────────────────────────────────────────────────────── */
+      const res = await fetch(API + '/transacao/listar');
+      const lista = await res.json();
+
+      // Atualiza os cards de métricas
+      atualizarMetricas(lista);
+
+      // Atualiza o contador na header da tabela
+      document.getElementById('countPill').textContent = lista.length;
+
+      const wrap = document.getElementById('tabelaWrap');
+
+      if (!lista.length) {
+        wrap.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <p>Nenhuma transação registrada ainda.<br/>Faça a primeira análise para começar.</p>
+          </div>`;
+        return;
+      }
+
+      // Monta as linhas da tabela dinamicamente
+      let linhas = lista.map((t, i) => {
+        // Pega as iniciais do usuário para o avatar
+        const iniciais = (t.usuarioId || '?').substring(0, 2).toUpperCase();
+
+        // Marca a primeira linha como nova se veio de uma análise recente
+        const cls = (nova && i === 0) ? 'row-new' : '';
+
+        return `<tr class="${cls}">
+          <td>
+            <div class="user-cell">
+              <div class="avatar">${iniciais}</div>
+              ${t.usuarioId}
+            </div>
+          </td>
+          <td class="valor-cell">R$ ${parseFloat(t.valor).toFixed(2)}</td>
+          <td>${t.cidade}</td>
+          <td>${t.hora}</td>
+          <td>${t.dispositivo}</td>
+          <td class="score-cell">${t.score}</td>
+          <td><span class="risco-pill ${t.risco}">${t.risco}</span></td>
+        </tr>`;
+      }).join('');
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Valor</th>
+              <th>Cidade</th>
+              <th>Hora</th>
+              <th>Dispositivo</th>
+              <th>Score</th>
+              <th>Risco</th>
+            </tr>
+          </thead>
+          <tbody>${linhas}</tbody>
+        </table>`;
+
+    } catch (e) {
+      console.warn('Não foi possível carregar o histórico:', e);
+    }
+
+    refreshIcon.classList.remove('spin');
   }
 
+  /* ──────────────────────────────────────────────────────────────
+     Carrega a tabela assim que a página é aberta
+  ────────────────────────────────────────────────────────────── */
   carregarTabela();
+
+  /* ──────────────────────────────────────────────────────────────
+     Permite enviar o formulário pressionando Enter em qualquer campo
+  ────────────────────────────────────────────────────────────── */
+  document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') analisar();
+    });
+  });
 </script>
 
 </body>
