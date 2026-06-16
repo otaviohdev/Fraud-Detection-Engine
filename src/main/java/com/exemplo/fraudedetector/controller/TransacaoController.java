@@ -18,7 +18,6 @@ public class TransacaoController {
     private final ScoreService scoreService;
     private final TransacaoRepository transacaoRepository;
 
-    @Autowired
     public TransacaoController(ScoreService scoreService, TransacaoRepository transacaoRepository) {
         this.scoreService = scoreService;
         this.transacaoRepository = transacaoRepository;
