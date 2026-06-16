@@ -4,6 +4,7 @@ import com.exemplo.fraudedetector.dto.ScoreResponse;
 import com.exemplo.fraudedetector.dto.TransacaoRequest;
 import com.exemplo.fraudedetector.model.Transacao;
 import com.exemplo.fraudedetector.repository.TransacaoRepository;
+import com.exemplo.fraudedetector.ia.AnalistaIA;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
@@ -16,12 +17,14 @@ import java.util.concurrent.ExecutionException;
 public class ScoreService {
 
     private final TransacaoRepository transacaoRepository;
+    private final AnalistaIA analistaIA;
     private final RestTemplate restTemplate = new RestTemplate();
     private static final String PYTHON_URL = "http://localhost:5000/prever";
 
-    public ScoreService(TransacaoRepository transacaoRepository) {
-        this.transacaoRepository = transacaoRepository;
-    }
+    public ScoreService(TransacaoRepository transacaoRepository, AnalistaIA analistaIA) {
+    this.transacaoRepository = transacaoRepository;
+    this.analistaIA = analistaIA;
+}
 
     public ScoreResponse calcularScore(TransacaoRequest transacao)
             throws ExecutionException, InterruptedException {
@@ -58,6 +61,10 @@ public class ScoreService {
         }
 
         String labelML = chamarModeloML(transacao.getValor(), hora, score);
+        String explicacao = analistaIA.explicarScore(
+    transacao.getValor(), transacao.getCidade(), transacao.getHora(),
+    transacao.getDispositivo(), score, risco
+);
 
         Transacao novaTransacao = new Transacao();
         novaTransacao.setUsuarioId(transacao.getUsuarioId());
@@ -69,7 +76,7 @@ public class ScoreService {
         novaTransacao.setRisco(risco);
         transacaoRepository.salvar(novaTransacao);
 
-        return new ScoreResponse(score, risco, labelML);
+        return new ScoreResponse(score, risco, labelML, explicacao);
     }
 
     private String chamarModeloML(double valor, int hora, int score) {
