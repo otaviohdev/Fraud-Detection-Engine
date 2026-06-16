@@ -5,8 +5,11 @@ import jakarta.validation.constraints.*;
 public class TransacaoRequest {
 
     @NotBlank(message = "O usuarioId é obrigatório")
-    @Size(max = 50, message = "usuarioId excede o tamanho máximo permitido")
-    private String usuarioId;
+@Size(max = 50, message = "usuarioId excede o tamanho máximo permitido")
+private String usuarioId;
+
+public String getUsuarioId() { return usuarioId; }
+public void setUsuarioId(String usuarioId) { this.usuarioId = usuarioId; }
 
     @NotNull(message = "O valor é obrigatório")
     @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero")
@@ -26,9 +29,6 @@ public class TransacaoRequest {
     @Size(max = 50, message = "Dispositivo excede o tamanho máximo permitido")
     @Pattern(regexp = "^[a-zA-Z0-9\\s-]+$", message = "Dispositivo contém caracteres inválidos")
     private String dispositivo;
-
-    public String getUsuarioId() { return usuarioId; }
-    public void setUsuarioId(String usuarioId) { this.usuarioId = usuarioId; }
 
     public Double getValor() { return valor; }
     public void setValor(Double valor) { this.valor = valor; }

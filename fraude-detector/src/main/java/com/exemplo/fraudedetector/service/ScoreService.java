@@ -51,7 +51,6 @@ public class ScoreService {
             }
         }
 
-        // Classifica o risco com base no score total
         String risco;
         if (score >= 50) {
             risco = "ALTO";
