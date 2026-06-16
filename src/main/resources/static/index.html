@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Antifraude</title>
+    <style>
+        /* Estilo geral da página */
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Caixa central do dashboard */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* Estilo dos campos de texto */
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        /* Estilo do botão de enviar */
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        /* Caixa onde o resultado aparece */
+        .resultado {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none; /* começa escondido, aparece após análise */
+        }
+
+        /* Cores diferentes por nível de risco */
+        .ALTO    { background: #ffebee; border-left: 4px solid #f44336; }
+        .MEDIO   { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .BAIXO   { background: #e8f5e9; border-left: 4px solid #4CAF50; }
+
+        .score-numero {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .risco-label {
+            font-size: 20px;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔍 Análise de Fraude</h1>
+
+    <!-- Formulário de entrada de dados da transação -->
+    <input type="text"   id="usuarioId"  placeholder="ID do Usuário (ex: user123)" />
+    <input type="number" id="valor"      placeholder="Valor da Transação (ex: 5000)" />
+    <input type="text"   id="cidade"     placeholder="Cidade (ex: São Paulo)" />
+    <input type="text"   id="hora"       placeholder="Hora no formato HH:mm (ex: 03:15)" />
+    <input type="text"   id="dispositivo" placeholder="Dispositivo (ex: Android)" />
+
+    <!-- Botão que dispara a análise -->
+    <button onclick="analisar()">Analisar Transação</button>
+
+    <!-- Caixa de resultado, inicialmente escondida -->
+    <div class="resultado" id="resultado">
+        <div class="score-numero" id="scoreNumero"></div>
+        <div class="risco-label"  id="riscoLabel"></div>
+    </div>
+</div>
+
+<script>
+    // Função chamada quando o botão é clicado
+    async function analisar() {
+
+        // Lê os valores digitados nos campos
+        const dados = {
+            usuarioId:   document.getElementById('usuarioId').value,
+            valor:       parseFloat(document.getElementById('valor').value),
+            cidade:      document.getElementById('cidade').value,
+            hora:        document.getElementById('hora').value,
+            dispositivo: document.getElementById('dispositivo').value
+        }
+
+        // "fetch" envia os dados para a API Java e espera a resposta
+        // "await" significa: espere a resposta antes de continuar
+        const resposta = await fetch('http://localhost:8080/transacao/analisar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados) // converte o objeto JS para texto JSON
+        })
+
+        // Converte a resposta da API de JSON para objeto JavaScript
+        const resultado = await resposta.json()
+
+        // Pega o elemento HTML da caixa de resultado
+        const caixaResultado = document.getElementById('resultado')
+
+        // Remove classes de risco antigas e adiciona a nova (muda a cor)
+        caixaResultado.className = 'resultado ' + resultado.risco
+
+        // Mostra o score e o nível de risco na tela
+        document.getElementById('scoreNumero').textContent = 'Score: ' + resultado.score
+        document.getElementById('riscoLabel').textContent  = 'Risco: ' + resultado.risco
+
+        // Torna a caixa de resultado visível
+        caixaResultado.style.display = 'block'
+    }
+</script>
+</body>
+</html>
