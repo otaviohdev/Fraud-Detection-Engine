@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Antifraude</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    h1 { color: #333; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th { background: #333; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #ddd; }
+    .ALTO { color: red; font-weight: bold; }
+    .MEDIO { color: orange; font-weight: bold; }
+    .BAIXO { color: green; font-weight: bold; }
+    .FRAUDE { color: red; font-weight: bold; }
+    .NORMAL { color: green; font-weight: bold; }
+    .form-box { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+    input { margin: 5px; padding: 8px; width: 200px; }
+    button { padding: 10px 20px; background: #333; color: white; border: none; cursor: pointer; margin: 5px; }
+    #resultado { margin-top: 10px; font-size: 18px; font-weight: bold; }
+    #mlResultado { margin-top: 5px; font-size: 16px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Sistema Antifraude</h1>
+
+<div class="form-box">
+  <h2>Analisar Transacao</h2>
+  <input id="usuarioId" placeholder="ID do usuario" />
+  <input id="valor" placeholder="Valor (ex: 5000)" type="number" />
+  <input id="cidade" placeholder="Cidade (ex: Sao Paulo)" />
+  <input id="hora" placeholder="Hora (ex: 03:00)" />
+  <input id="dispositivo" placeholder="Dispositivo (ex: iPhone)" />
+  <br>
+  <button onclick="analisar()">Analisar</button>
+  <div id="resultado"></div>
+  <div id="mlResultado"></div>
+</div>
+
+<h2>Ultimas Transacoes</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Usuario</th>
+      <th>Valor</th>
+      <th>Cidade</th>
+      <th>Hora</th>
+      <th>Dispositivo</th>
+      <th>Score</th>
+      <th>Risco</th>
+    </tr>
+  </thead>
+  <tbody id="tabela"></tbody>
+</table>
+
+<script>
+  const API = 'http://localhost:8080';
+
+  async function analisar() {
+    const body = {
+      usuarioId: document.getElementById('usuarioId').value,
+      valor: parseFloat(document.getElementById('valor').value),
+      cidade: document.getElementById('cidade').value,
+      hora: document.getElementById('hora').value,
+      dispositivo: document.getElementById('dispositivo').value
+    };
+
+    const res = await fetch(API + '/transacao/analisar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+
+    const el = document.getElementById('resultado');
+    el.className = data.risco;
+    el.textContent = 'Score: ' + data.score + ' - Risco: ' + data.risco;
+
+    const ml = document.getElementById('mlResultado');
+    ml.className = data.resultadoML;
+    ml.textContent = 'ML: ' + data.resultadoML;
+
+    carregarTabela();
+  }
+
+  async function carregarTabela() {
+    const res = await fetch(API + '/transacao/listar');
+    const lista = await res.json();
+    const tabela = document.getElementById('tabela');
+    tabela.innerHTML = '';
+    lista.forEach(t => {
+      tabela.innerHTML += '<tr>' +
+        '<td>' + t.usuarioId + '</td>' +
+        '<td>R$ ' + t.valor.toFixed(2) + '</td>' +
+        '<td>' + t.cidade + '</td>' +
+        '<td>' + t.hora + '</td>' +
+        '<td>' + t.dispositivo + '</td>' +
+        '<td>' + t.score + '</td>' +
+        '<td class="' + t.risco + '">' + t.risco + '</td>' +
+        '</tr>';
+    });
+  }
+
+  carregarTabela();
+</script>
+
+</body>
+</html>

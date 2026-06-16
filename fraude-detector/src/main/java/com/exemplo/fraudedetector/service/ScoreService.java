@@ -5,42 +5,44 @@ import com.exemplo.fraudedetector.dto.TransacaoRequest;
 import com.exemplo.fraudedetector.model.Transacao;
 import com.exemplo.fraudedetector.repository.TransacaoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Service
 public class ScoreService {
 
     private final TransacaoRepository transacaoRepository;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private static final String PYTHON_URL = "http://localhost:5000/prever";
 
     public ScoreService(TransacaoRepository transacaoRepository) {
         this.transacaoRepository = transacaoRepository;
     }
 
-    public ScoreResponse calcularScore(TransacaoRequest transacao) throws ExecutionException, InterruptedException {
+    public ScoreResponse calcularScore(TransacaoRequest transacao)
+            throws ExecutionException, InterruptedException {
+
         int score = 0;
 
-        // Regra 1: valor alto
         if (transacao.getValor() > 3000) {
             score += 20;
         }
 
-        // Regra 2: horário de madrugada
         int hora = Integer.parseInt(transacao.getHora().split(":")[0]);
         if (hora >= 0 && hora <= 5) {
             score += 15;
         }
 
-        // Buscar última transação do usuário para comparar
         Transacao ultima = transacaoRepository.buscarUltimaTransacao(transacao.getUsuarioId());
 
         if (ultima != null) {
-            // Regra 3: cidade diferente da última compra
             if (!ultima.getCidade().equalsIgnoreCase(transacao.getCidade())) {
                 score += 25;
             }
-
-            // Regra 4: dispositivo diferente do último usado
             if (!ultima.getDispositivo().equalsIgnoreCase(transacao.getDispositivo())) {
                 score += 30;
             }
@@ -55,7 +57,8 @@ public class ScoreService {
             risco = "BAIXO";
         }
 
-        // Salvar a transação atual no Firestore para servir de histórico nas próximas
+        String labelML = chamarModeloML(transacao.getValor(), hora, score);
+
         Transacao novaTransacao = new Transacao();
         novaTransacao.setUsuarioId(transacao.getUsuarioId());
         novaTransacao.setValor(transacao.getValor());
@@ -64,11 +67,31 @@ public class ScoreService {
         novaTransacao.setDispositivo(transacao.getDispositivo());
         novaTransacao.setScore(score);
         novaTransacao.setRisco(risco);
-
         transacaoRepository.salvar(novaTransacao);
 
-        return new ScoreResponse(score, risco);
+        return new ScoreResponse(score, risco, labelML);
+    }
+
+    private String chamarModeloML(double valor, int hora, int score) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("valor", valor);
+            payload.put("hora", hora);
+            payload.put("score", score);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                PYTHON_URL, request, Map.class
+            );
+
+            return (String) response.getBody().get("label");
+
+        } catch (Exception e) {
+            return "ML_INDISPONIVEL";
+        }
     }
 }
-
-
