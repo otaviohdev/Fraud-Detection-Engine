@@ -4,7 +4,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -15,17 +14,17 @@ import java.util.Base64;
 @Component
 public class FirebaseConfig {
 
-    @Value("${FIREBASE_CREDENTIALS:}")
-    private String firebaseCredentialsBase64;
-
     @PostConstruct
     public void init() throws IOException {
         if (FirebaseApp.getApps().isEmpty()) {
             InputStream serviceAccount;
 
-            if (firebaseCredentialsBase64 != null && !firebaseCredentialsBase64.isEmpty()) {
-                // Produção (Railway): lê as credenciais da variável de ambiente
-                byte[] decoded = Base64.getDecoder().decode(firebaseCredentialsBase64);
+            // Lê direto das variáveis de ambiente do sistema (funciona no Railway)
+            String credenciaisBase64 = System.getenv("FIREBASE_CREDENTIALS");
+
+            if (credenciaisBase64 != null && !credenciaisBase64.isEmpty()) {
+                // Produção: decodifica o Base64 e usa como stream
+                byte[] decoded = Base64.getDecoder().decode(credenciaisBase64.trim());
                 serviceAccount = new ByteArrayInputStream(decoded);
             } else {
                 // Local: lê o arquivo JSON normalmente
