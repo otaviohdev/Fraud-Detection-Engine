@@ -31,7 +31,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(List.of(
-            "https://fraud-detection-engine-production-6455.up.railway.app",
+            "https://fraud-detection-engine-chi.vercel.app",
             "http://localhost:3000"
         ));
 
