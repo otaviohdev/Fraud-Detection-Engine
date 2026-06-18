@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Component
 public class FirebaseConfig {
@@ -19,16 +20,17 @@ public class FirebaseConfig {
         if (FirebaseApp.getApps().isEmpty()) {
             InputStream serviceAccount;
 
-            // Tenta ler o JSON direto da variável de ambiente
+            String credenciaisBase64 = System.getenv("FIREBASE_CREDENTIALS_BASE64");
             String credenciaisJson = System.getenv("FIREBASE_CREDENTIALS_JSON");
 
-            if (credenciaisJson != null && !credenciaisJson.isEmpty()) {
-                // Produção: converte a string JSON para stream
+            if (credenciaisBase64 != null && !credenciaisBase64.isEmpty()) {
+                byte[] decoded = Base64.getDecoder().decode(credenciaisBase64.trim());
+                serviceAccount = new ByteArrayInputStream(decoded);
+            } else if (credenciaisJson != null && !credenciaisJson.isEmpty()) {
                 serviceAccount = new ByteArrayInputStream(
                     credenciaisJson.getBytes(StandardCharsets.UTF_8)
                 );
             } else {
-                // Local: lê o arquivo JSON normalmente
                 serviceAccount = getClass().getClassLoader()
                     .getResourceAsStream("firebase-service-account.json");
             }
@@ -41,4 +43,3 @@ public class FirebaseConfig {
         }
     }
 }
-
