@@ -3,7 +3,7 @@ import joblib
 
 app = Flask(__name__)
 
-modelo = joblib.load('ml/modelo_fraude.pkl')
+modelo = joblib.load('modelo_fraude.pkl')
 print("Modelo carregado. Servidor pronto para receber requisicoes.")
 
 @app.route('/prever', methods=['POST'])
