@@ -19,7 +19,7 @@ public class ScoreService {
     private final TransacaoRepository transacaoRepository;
     private final AnalistaIA analistaIA;
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final String PYTHON_URL = "http://localhost:5000/prever";
+    private static final String PYTHON_URL = "https://fraud-detection-engine-yg3m.onrender.com/prever";
 
     public ScoreService(TransacaoRepository transacaoRepository, AnalistaIA analistaIA) {
     this.transacaoRepository = transacaoRepository;
